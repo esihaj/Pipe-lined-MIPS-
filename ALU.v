@@ -1,3 +1,4 @@
+//ALU Module
 module ALU (input [2:0] fn, input [7:0] op_A, op_B,input cin, output reg [7:0] out,output reg co, z); 
 
 	always@(*)begin
