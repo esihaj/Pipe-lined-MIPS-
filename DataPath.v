@@ -1,5 +1,6 @@
 //select_(c,z) : mux to select which input connects to C/Z FF
-module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry, input [2:0] alu_op, input [1:0] pc_mux, reg_write_mux, input alu_in_mux,reg_B_mux, select_c, select_z, write_c, write_z, output reg C, Z, output [18:0] instruction);
+module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry, input [2:0] alu_op, input [1:0] pc_mux, reg_write_mux, input alu_in_mux,reg_B_mux, select_c, select_z, write_c, write_z,
+	output reg C, Z, output [18:0] IF_ID_instruction);
 //PC
 //Instruction memory
 //register file
@@ -13,7 +14,11 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	reg next_C,next_Z;
 	//pc & inst Memory
 	reg  [11:0] pc, next_pc;
-	//wire [18:0] instruction;
+	wire [18:0] instruction;
+	
+	//IF_ID
+	//wire [18:0] IF_ID_instruction; //became output to controller
+	wire [11:0] IF_ID_pc;
 	
 	//reg file
 	reg  [2:0] reg_addr_A, reg_addr_B, reg_addr_write;
@@ -50,15 +55,15 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	Stack 	stack(clk, reset, push,pop, stack_in, stack_out);
 	ALU 	alu(alu_op , alu_A, alu_B, alu_cin, alu_out, alu_co, alu_z); 
 	BarrelShifter bs(shift_data, bitcount,  dir, sh_roBar, shift_out, shift_c, shift_z);
-	
+	IF_ID if_id(clk, reset, flush, instruction, pc, IF_ID_instruction, IF_ID_pc)
 	
 
 	always @(*) begin //calculate the new pc
 		//PC
 		case(pc_mux)
 			2'b00: next_pc <= pc + 1;
-			2'b01: next_pc <= pc + 1 + instruction[7:0];
-			2'b10: next_pc <= instruction[11:0];
+			2'b01: next_pc <= pc + IF_ID_instruction[7:0]; // IF_ID_pc+1 == pc  
+			2'b10: next_pc <= IF_ID_instruction[11:0]; //from ID level
 			2'b11: next_pc <= stack_out;
 		endcase
 		
@@ -87,10 +92,10 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 		shift_data <= reg_data_A;
 		
 		//RegFile
-		reg_addr_A <= instruction[10:8];
+		reg_addr_A <= IF_ID_instruction[10:8];
 		case(reg_B_mux)
-			1'b0: reg_addr_B <= instruction[7:5];
-			1'b1: reg_addr_B <= instruction[13:11];
+			1'b0: reg_addr_B <= IF_ID_instruction[7:5];
+			1'b1: reg_addr_B <= IF_ID_instruction[13:11];
 		endcase
 		reg_addr_write <= instruction[13:11];
 		case(reg_write_mux)
@@ -132,7 +137,7 @@ module test_data_path();
 	reg alu_in_mux,reg_B_mux, select_c, select_z, write_c, write_z;
 	wire C, Z;
 	wire [18:0] instruction;
-	DataPath dp(clk, reset, mem_write, reg_write, push, pop, alu_use_carry, alu_op, pc_mux, reg_write_mux, alu_in_mux,reg_B_mux, select_c, select_z, write_c, write_z, C, Z, instruction);
+	DataPath dp(clk, reset, mem_write, reg_write, push, pop, alu_use_carry, alu_op, pc_mux, reg_write_mux, alu_in_mux,reg_B_mux, select_c, select_z, write_c, write_z, C, Z, instruction); //but in pipeline, current instruction is ID level one
 	
 	
 	
