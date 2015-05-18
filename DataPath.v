@@ -25,6 +25,11 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	reg  [7:0] reg_write_data;
 	wire [7:0]	reg_data_A, reg_data_B;
 	
+	//ID_EX
+	wire [7:0] ID_EX_A, ID_EX_B, [18:0] ID_EX_instruction;
+	/*controller*/
+	wire ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_in_mux, ID_EX_select_c, ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, [2:0] ID_EX_alu_op, [1:0] ID_EX_reg_write_mux;
+	
 	//data memory
 	reg  [7:0] mem_addr, mem_write_data;
 	wire [7:0] mem_out_data;
@@ -57,7 +62,9 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	BarrelShifter bs(shift_data, bitcount,  dir, sh_roBar, shift_out, shift_c, shift_z);
 	
 	IF_ID if_id(clk, reset, flush, instruction, pc, IF_ID_instruction, IF_ID_pc);
-	
+	ID_EX id_ex(clk, reset, reg_data_A, reg_data_B, IF_ID_instruction, mem_write, reg_write, alu_use_carry, alu_in_mux, select_c, select_z, write_c, write_z, alu_op, reg_write_mux,
+	ID_EX_A, ID_EX_B, ID_EX_instruction,
+	ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_in_mux, ID_EX_select_c, ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, ID_EX_alu_op, ID_EX_reg_write_mux);
 
 	always @(*) begin //calculate the new pc
 		//PC
