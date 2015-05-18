@@ -55,7 +55,8 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	Stack 	stack(clk, reset, push,pop, stack_in, stack_out);
 	ALU 	alu(alu_op , alu_A, alu_B, alu_cin, alu_out, alu_co, alu_z); 
 	BarrelShifter bs(shift_data, bitcount,  dir, sh_roBar, shift_out, shift_c, shift_z);
-	IF_ID if_id(clk, reset, flush, instruction, pc, IF_ID_instruction, IF_ID_pc)
+	
+	IF_ID if_id(clk, reset, flush, instruction, pc, IF_ID_instruction, IF_ID_pc);
 	
 
 	always @(*) begin //calculate the new pc
