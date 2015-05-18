@@ -15,6 +15,7 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	//pc & inst Memory
 	reg  [11:0] pc, next_pc;
 	wire [18:0] instruction;
+	reg pc_enable;
 	
 	//IF_ID
 	//wire [18:0] IF_ID_instruction; //became output to controller
@@ -45,6 +46,7 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	wire [7:0] MEM_WB_mem_out_data, MEM_WB_alu_out, MEM_WB_shift_out;
 	wire [18:0] MEM_WB_instruction;
 	wire [1:0] MEM_WB_reg_write_mux;
+	wire MEM_WB_reg_write;
 	
 	//data memory
 	reg  [7:0] mem_addr, mem_write_data;
@@ -71,8 +73,8 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	
 	//Modules
 	InstMem inst_mem (pc,instruction);
-	DataMem data_mem (clk, mem_write, mem_addr , mem_write_data, mem_out_data);
-	RegFile reg_file (clk, reg_write, reg_addr_A, reg_addr_B, reg_addr_write, reg_write_data, reg_data_A, reg_data_B);
+	DataMem data_mem (clk, EX_MEM_mem_write, mem_addr , mem_write_data, mem_out_data);
+	RegFile reg_file (clk, MEM_WB_reg_write, reg_addr_A, reg_addr_B, reg_addr_write, reg_write_data, reg_data_A, reg_data_B);
 	Stack 	stack(clk, reset, push,pop, stack_in, stack_out);
 	ALU 	alu(alu_op , alu_A, alu_B, alu_cin, alu_out, alu_co, alu_z); 
 	BarrelShifter bs(shift_data, bitcount,  dir, sh_roBar, shift_out, shift_c, shift_z);
@@ -83,7 +85,7 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 
 	EX_MEM ex_mem(clk, reset, alu_out, ID_EX_B, shift_out, ID_EX_mem_write, ID_EX_reg_write, ID_EX_instruction, ID_EX_reg_write_mux, EX_MEM_alu_out, EX_MEM_B,EX_MEM_shift_out, EX_MEM_mem_write, EX_MEM_reg_write, EX_MEM_instruction, EX_MEM_reg_write_mux);
 	
-	MEM_WB mem_wb(clk, reset, mem_out_data, EX_MEM_alu_out, EX_MEM_shift_out, EX_MEM_instruction, EX_MEM_reg_write_mux, MEM_WB_mem_out_data, MEM_WB_alu_out, MEM_WB_shift_out,  MEM_WB_instruction, MEM_WB_reg_write_mux);
+	MEM_WB mem_wb(clk, reset, mem_out_data, EX_MEM_alu_out, EX_MEM_shift_out, EX_MEM_instruction, EX_MEM_reg_write_mux, EX_MEM_reg_write, MEM_WB_mem_out_data, MEM_WB_alu_out, MEM_WB_shift_out,  MEM_WB_instruction, MEM_WB_reg_write_mux, MEM_WB_reg_write);
 	
 	always @(*) begin //calculate the new pc
 		//PC
@@ -146,14 +148,16 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	
 	always @(posedge clk)begin //set new values to registers
 		if(reset == 1'b0) begin
-			pc = next_pc;
+			if(pc_enable)
+				pc = next_pc;
+			else pc_enable = 1'b1;//@TODO toff moshkel 1 -> shayad esmesh ro bezarim init behtar bashe
 			if(ID_EX_write_c)
 				C = next_C;
 			if(ID_EX_write_z)
 				Z = next_Z;
 		end
 		else begin
-			{pc,C,Z} = 0;
+			{pc,C,Z, pc_enable} = 0;
 		end
 	end 
 endmodule
