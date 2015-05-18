@@ -2,7 +2,7 @@ module ID_EX (input clk, reset,
 	/*data path*/
 	input [7:0] reg_in_A, reg_in_B, input [18:0] IF_ID_instruction,
 	/*controller*/
-	input mem_write, reg_write, alu_use_carry, alu_in_mux, select_c, select_z, write_c, write_z, input [2:0] alu_op,           input [1:0] reg_write_mux, 
+	input mem_write, reg_write, alu_use_carry, alu_in_mux, select_c, select_z, write_c, write_z, input [2:0] alu_op,  input [1:0] reg_write_mux, 
 	/*data path*/
 	output [7:0] ID_EX_A, ID_EX_B, output [18:0] ID_EX_instruction,
 	/*controller*/
