@@ -26,7 +26,14 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	wire [7:0]	reg_data_A, reg_data_B;
 	
 	//ID_EX
-	wire [7:0] ID_EX_A, ID_EX_B, [18:0] ID_EX_instruction;
+	wire [7:0] ID_EX_A, ID_EX_B;
+    wire [18:0] ID_EX_instruction;
+	
+	//EX_MEM
+	wire [7:0] EX_MEM_alu_out, EX_MEM_B, EX_MEM_shift_out;
+	wire EX_MEM_mem_write, EX_MEM_reg_write;
+	wire [1:0] EX_MEM_reg_write_mux;
+	
 	/*controller*/
 	wire ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_in_mux, ID_EX_select_c, ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, [2:0] ID_EX_alu_op, [1:0] ID_EX_reg_write_mux;
 	
@@ -62,42 +69,43 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	BarrelShifter bs(shift_data, bitcount,  dir, sh_roBar, shift_out, shift_c, shift_z);
 	
 	IF_ID if_id(clk, reset, flush, instruction, pc, IF_ID_instruction, IF_ID_pc);
-	ID_EX id_ex(clk, reset, reg_data_A, reg_data_B, IF_ID_instruction, mem_write, reg_write, alu_use_carry, alu_in_mux, select_c, select_z, write_c, write_z, alu_op, reg_write_mux,
-	ID_EX_A, ID_EX_B, ID_EX_instruction,
-	ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_in_mux, ID_EX_select_c, ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, ID_EX_alu_op, ID_EX_reg_write_mux);
+	
+	ID_EX id_ex(clk, reset, reg_data_A, reg_data_B, IF_ID_instruction, mem_write, reg_write, alu_use_carry, alu_in_mux, select_c, select_z, write_c, write_z, alu_op, reg_write_mux, ID_EX_A, ID_EX_B, ID_EX_instruction, ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_in_mux, ID_EX_select_c,ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, ID_EX_alu_op, ID_EX_reg_write_mux);
 
+	EX_MEM ex_mem(clk, reset, alu_out, ID_EX_B, shift_out, ID_EX_mem_write, ID_EX_reg_write, ID_EX_reg_write_mux, EX_MEM_alu_out, EX_MEM_B, 					EX_MEM_shift_out, EX_MEM_mem_write, EX_MEM_reg_write, EX_MEM_reg_write_mux);
+			
 	always @(*) begin //calculate the new pc
 		//PC
 		case(pc_mux)
 			2'b00: next_pc <= pc + 1;
 			2'b01: next_pc <= pc + IF_ID_instruction[7:0]; // IF_ID_pc+1 == pc  
 			2'b10: next_pc <= IF_ID_instruction[11:0]; //from ID level
-			2'b11: next_pc <= stack_out;
+			2'b11: next_pc <= stack_out;8/
 		endcase
 		
 		//Stack
 		stack_in <= pc + 1;
 		
 		//ALU
-		$display("ALU time %t", $time);
+		//$display("ALU time %t", $time);
 		//$display("reg A %b", reg_data_A);		
-		alu_A <= reg_data_A;
+		alu_A <= ID_EX_A;
 		//$display("alu A %b", alu_A);
-		case(alu_in_mux)
-			1'b0: alu_B <= reg_data_B;
-			1'b1:begin $display("alu B %b", instruction[7:0]); alu_B <= instruction[7:0]; end
+		case(ID_EX_alu_in_mux)
+			1'b0: alu_B <= ID_EX_B;
+			1'b1:begin $display("alu B %b", ID_EX_instruction[7:0]); alu_B <= ID_EX_instruction[7:0]; end
 		endcase 
-		alu_cin <= alu_use_carry ? C : 1'b0;
+		alu_cin <= ID_EX_alu_use_carry ? C : 1'b0;
 		
 		//Data Memory
-		mem_addr <= alu_out;
-		mem_write_data <= reg_data_B;
+		mem_addr <= EX_MEM_alu_out;
+		mem_write_data <= EX_MEM_B;
 		
 		//Shifter
-		bitcount <= instruction[8:5];
-		sh_roBar <= instruction[15];
-		dir <= instruction[14];
-		shift_data <= reg_data_A;
+		bitcount <= ID_EX_instruction[8:5];
+		sh_roBar <= ID_EX_instruction[15];
+		dir <= ID_EX_instruction[14];
+		shift_data <= ID_EX_A; //@TODO remember to use forwarding
 		
 		//RegFile
 		reg_addr_A <= IF_ID_instruction[10:8];
@@ -105,6 +113,8 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 			1'b0: reg_addr_B <= IF_ID_instruction[7:5];
 			1'b1: reg_addr_B <= IF_ID_instruction[13:11];
 		endcase
+		
+		//Write Back to RegFile
 		reg_addr_write <= instruction[13:11];
 		case(reg_write_mux)
 			2'b00: reg_write_data <= alu_out;
@@ -113,11 +123,11 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 		endcase
 		
 		//C & Z FlipFlop
-		case(select_c)
+		case(ID_EX_select_c)
 			1'b0: next_C <= alu_co;
 			1'b1: next_C <= shift_c;
 		endcase
-		case(select_z)
+		case(ID_EX_select_z)
 			1'b0: next_Z <= alu_z;
 			1'b1: next_Z <= shift_z;
 		endcase
@@ -126,9 +136,9 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	always @(posedge clk)begin //set new values to registers
 		if(reset == 1'b0) begin
 			pc = next_pc;
-			if(write_c)
+			if(ID_EX_write_c)
 				C = next_C;
-			if(write_z)
+			if(ID_EX_write_z)
 				Z = next_Z;
 		end
 		else begin
