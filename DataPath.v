@@ -35,7 +35,14 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	wire [1:0] EX_MEM_reg_write_mux;
 	
 		//controller
-	wire ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_in_mux, ID_EX_select_c, ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, [2:0] ID_EX_alu_op, [1:0] ID_EX_reg_write_mux;
+	wire ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_in_mux, ID_EX_select_c, ID_EX_select_z, ID_EX_write_c, ID_EX_write_z;
+	wire	[2:0] ID_EX_alu_op;
+	wire	[1:0] ID_EX_reg_write_mux;
+	
+	//MEM_WB
+	wire [7:0] MEM_WB_mem_out_data, MEM_WB_alu_out, MEM_WB_shift_out;
+	wire [18:0] MEM_WB_instruction;
+	wire MEM_WB_reg_write_mux;
 	
 	//data memory
 	reg  [7:0] mem_addr, mem_write_data;
@@ -72,15 +79,17 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	
 	ID_EX id_ex(clk, reset, reg_data_A, reg_data_B, IF_ID_instruction, mem_write, reg_write, alu_use_carry, alu_in_mux, select_c, select_z, write_c, write_z, alu_op, reg_write_mux, ID_EX_A, ID_EX_B, ID_EX_instruction, ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_in_mux, ID_EX_select_c,ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, ID_EX_alu_op, ID_EX_reg_write_mux);
 
-	EX_MEM ex_mem(clk, reset, alu_out, ID_EX_B, shift_out, ID_EX_mem_write, ID_EX_reg_write, ID_EX_reg_write_mux, EX_MEM_alu_out, EX_MEM_B, 					EX_MEM_shift_out, EX_MEM_mem_write, EX_MEM_reg_write, EX_MEM_reg_write_mux);
-			
+	EX_MEM ex_mem(clk, reset, alu_out, ID_EX_B, shift_out, ID_EX_mem_write, ID_EX_reg_write, ID_EX_reg_write_mux, EX_MEM_alu_out, EX_MEM_B,EX_MEM_shift_out, EX_MEM_mem_write, EX_MEM_reg_write, EX_MEM_reg_write_mux);
+	
+	MEM_WB mem_wb(clk, reset, EX_MEM_mem_out_data, EX_MEM_alu_out, EX_MEM_shift_out, EX_MEM_instruction, EX_MEM_reg_write_mux, MEM_WB_mem_out_data, MEM_WB_alu_out, MEM_WB_shift_out,  MEM_WB_instruction, MEM_WB_reg_write_mux);
+	
 	always @(*) begin //calculate the new pc
 		//PC
 		case(pc_mux)
 			2'b00: next_pc <= pc + 1;
 			2'b01: next_pc <= pc + IF_ID_instruction[7:0]; // IF_ID_pc+1 == pc  
 			2'b10: next_pc <= IF_ID_instruction[11:0]; //from ID level
-			2'b11: next_pc <= stack_out;8/
+			2'b11: next_pc <= stack_out;
 		endcase
 		
 		//Stack
@@ -115,11 +124,11 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 		endcase
 		
 		//Write Back to RegFile
-		reg_addr_write <= instruction[13:11];
-		case(reg_write_mux)
-			2'b00: reg_write_data <= alu_out;
-			2'b01: reg_write_data <= shift_out;
-			2'b10: reg_write_data <= mem_out_data;
+		reg_addr_write <= MEM_WB_instruction[13:11];
+		case(MEM_WB_reg_write_mux)
+			2'b00: reg_write_data <= MEM_WB_alu_out;
+			2'b01: reg_write_data <= MEM_WB_shift_out;
+			2'b10: reg_write_data <= MEM_WB_mem_out_data;
 		endcase
 		
 		//C & Z FlipFlop
