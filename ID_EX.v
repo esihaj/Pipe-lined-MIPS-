@@ -14,7 +14,7 @@ module ID_EX (input clk, reset,
 	
 	M_S_FF #(13) controller(clk, reset,
 		{mem_write, reg_write, alu_use_carry, alu_in_mux, select_c, select_z, write_c, write_z, alu_op, reg_write_mux},
-		{ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_in_mux, ID_EX_select_c, ID_EX_select_z, ID_EX_write_z, ID_EX_write_z, ID_EX_alu_op, ID_EX_reg_write_mux} );
+		{ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_in_mux, ID_EX_select_c, ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, ID_EX_alu_op, ID_EX_reg_write_mux} );
 
 	
 endmodule

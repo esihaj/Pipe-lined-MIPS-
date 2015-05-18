@@ -19,6 +19,7 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	//IF_ID
 	//wire [18:0] IF_ID_instruction; //became output to controller
 	wire [11:0] IF_ID_pc;
+	wire flush; //comes from hazard control unit
 	
 	//reg file
 	reg  [2:0] reg_addr_A, reg_addr_B, reg_addr_write;
@@ -32,6 +33,7 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	//EX_MEM
 	wire [7:0] EX_MEM_alu_out, EX_MEM_B, EX_MEM_shift_out;
 	wire EX_MEM_mem_write, EX_MEM_reg_write;
+	wire [18:0] EX_MEM_instruction;
 	wire [1:0] EX_MEM_reg_write_mux;
 	
 		//controller
@@ -42,7 +44,7 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	//MEM_WB
 	wire [7:0] MEM_WB_mem_out_data, MEM_WB_alu_out, MEM_WB_shift_out;
 	wire [18:0] MEM_WB_instruction;
-	wire MEM_WB_reg_write_mux;
+	wire [1:0] MEM_WB_reg_write_mux;
 	
 	//data memory
 	reg  [7:0] mem_addr, mem_write_data;
@@ -79,9 +81,9 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	
 	ID_EX id_ex(clk, reset, reg_data_A, reg_data_B, IF_ID_instruction, mem_write, reg_write, alu_use_carry, alu_in_mux, select_c, select_z, write_c, write_z, alu_op, reg_write_mux, ID_EX_A, ID_EX_B, ID_EX_instruction, ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_in_mux, ID_EX_select_c,ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, ID_EX_alu_op, ID_EX_reg_write_mux);
 
-	EX_MEM ex_mem(clk, reset, alu_out, ID_EX_B, shift_out, ID_EX_mem_write, ID_EX_reg_write, ID_EX_reg_write_mux, EX_MEM_alu_out, EX_MEM_B,EX_MEM_shift_out, EX_MEM_mem_write, EX_MEM_reg_write, EX_MEM_reg_write_mux);
+	EX_MEM ex_mem(clk, reset, alu_out, ID_EX_B, shift_out, ID_EX_mem_write, ID_EX_reg_write, ID_EX_instruction, ID_EX_reg_write_mux, EX_MEM_alu_out, EX_MEM_B,EX_MEM_shift_out, EX_MEM_mem_write, EX_MEM_reg_write, EX_MEM_instruction, EX_MEM_reg_write_mux);
 	
-	MEM_WB mem_wb(clk, reset, EX_MEM_mem_out_data, EX_MEM_alu_out, EX_MEM_shift_out, EX_MEM_instruction, EX_MEM_reg_write_mux, MEM_WB_mem_out_data, MEM_WB_alu_out, MEM_WB_shift_out,  MEM_WB_instruction, MEM_WB_reg_write_mux);
+	MEM_WB mem_wb(clk, reset, mem_out_data, EX_MEM_alu_out, EX_MEM_shift_out, EX_MEM_instruction, EX_MEM_reg_write_mux, MEM_WB_mem_out_data, MEM_WB_alu_out, MEM_WB_shift_out,  MEM_WB_instruction, MEM_WB_reg_write_mux);
 	
 	always @(*) begin //calculate the new pc
 		//PC
