@@ -34,7 +34,7 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	wire EX_MEM_mem_write, EX_MEM_reg_write;
 	wire [1:0] EX_MEM_reg_write_mux;
 	
-	/*controller*/
+		//controller
 	wire ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_in_mux, ID_EX_select_c, ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, [2:0] ID_EX_alu_op, [1:0] ID_EX_reg_write_mux;
 	
 	//data memory
