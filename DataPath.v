@@ -87,17 +87,17 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 		//PC
 		case(pc_mux)
 			2'b00: next_pc <= pc + 1;
-			2'b01: next_pc <= pc + IF_ID_instruction[7:0]; // IF_ID_pc+1 == pc  
-			2'b10: next_pc <= IF_ID_instruction[11:0]; //from ID level
-			2'b11: next_pc <= stack_out;
+			2'b01: next_pc <= pc + IF_ID_instruction[7:0]; //Branch Addr | IF_ID_pc+1 == pc  
+			2'b10: next_pc <= IF_ID_instruction[11:0]; //JMP Addr | from ID level
+			2'b11: next_pc <= stack_out; //RET Addr
 		endcase
 		
 		//Stack
-		stack_in <= pc + 1;
+		stack_in <= IF_ID_pc + 1;// 
 		
 		//ALU
-		//$display("ALU time %t", $time);
-		//$display("reg A %b", reg_data_A);		
+			//$display("ALU time %t", $time);
+			//$display("reg A %b", reg_data_A);		
 		alu_A <= ID_EX_A;
 		//$display("alu A %b", alu_A);
 		case(ID_EX_alu_in_mux)

@@ -8,7 +8,7 @@ module Controller(input clk, reset, C, Z, input [18:0] instruction, output reg m
 	wire do_branch;
 	BranchController branch_cntrl(instruction, C, Z, do_branch);
 	//Others
-	always@(instruction, C,Z, do_branch) begin
+	always@(instruction, C,Z, do_branch, reset) begin
 		$display("instruction T-%t %b", $time, instruction);
 		{pc_mux, reg_write_mux, alu_in_mux,reg_B_mux, select_c, select_z, write_c, write_z} = 0;
 		{mem_write, reg_write, push, pop} = 0;
@@ -43,16 +43,18 @@ module Controller(input clk, reset, C, Z, input [18:0] instruction, output reg m
 			pop = 1'b1;
 		
 		//PC
-		casex(instruction[18:14])
-			5'b101??:begin //Branch
-				if(do_branch)//if Branch controller confirms a branch operation
-					pc_mux = 2'b01;
-				else pc_mux = 2'b00;
-			end
-			5'b1110?: pc_mux = 2'b10;//[/JMP], [/JSB]
-			5'b11110: pc_mux = 2'b11;//[/RET]
-			default : pc_mux = 2'b00;//default
-		endcase
+		if(reset == 1'b1)
+			pc_mux = 2'b00;
+		else casex(instruction[18:14])
+				5'b101??:begin //Branch
+					if(do_branch)//if Branch controller confirms a branch operation
+						pc_mux = 2'b01;
+					else pc_mux = 2'b00;
+				end
+				5'b1110?: pc_mux = 2'b10;//[/JMP], [/JSB]
+				5'b11110: pc_mux = 2'b11;//[/RET]
+				default : pc_mux = 2'b00;//default
+			endcase
 	end
 endmodule
 
