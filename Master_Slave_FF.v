@@ -3,7 +3,7 @@
 module M_S_FF #(parameter width =1)(input clk, rst,[width-1:0]in, output reg [width-1:0] out);
 	reg [width-1:0] middle;
 	
-	always@(clk,in,posedge rst)begin 
+	always@(clk, in, rst)begin 
 		if(rst)
 			begin middle = 0; out = 0; end
 		else begin

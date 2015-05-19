@@ -15,7 +15,7 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	//pc & inst Memory
 	reg  [11:0] pc, next_pc;
 	wire [18:0] instruction;
-	reg pc_enable;
+	//reg pc_enable;
 	
 	//IF_ID
 	//wire [18:0] IF_ID_instruction; //became output to controller
@@ -146,18 +146,16 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 		endcase
 	end
 	
-	always @(posedge clk)begin //set new values to registers
+	always @(posedge clk, posedge reset)begin //set new values to registers
 		if(reset == 1'b0) begin
-			if(pc_enable)
-				pc = next_pc;
-			else pc_enable = 1'b1;//@TODO toff moshkel 1 -> shayad esmesh ro bezarim init behtar bashe
+			pc = next_pc;
 			if(ID_EX_write_c)
 				C = next_C;
 			if(ID_EX_write_z)
 				Z = next_Z;
 		end
 		else begin
-			{pc,C,Z, pc_enable} = 0;
+			{pc,C,Z} = 0;
 		end
 	end 
 endmodule
