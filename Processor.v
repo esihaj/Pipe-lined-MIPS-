@@ -2,8 +2,8 @@
 	wire [18:0] instruction;
 	wire mem_write, reg_write, push, pop, alu_use_carry;
 	wire [2:0] alu_op;
-	wire [1:0] pc_mux, reg_write_mux;
-	wire alu_in_mux,reg_B_mux, select_c, select_z, write_c, write_z;
+	wire [1:0] pc_mux, reg_write_mux, alu_in_mux;
+	wire reg_B_mux, select_c, select_z, write_c, write_z;
 	wire C, Z;
 	
 	Controller cntrl(clk ,reset, C, Z, instruction,

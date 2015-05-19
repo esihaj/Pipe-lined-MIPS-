@@ -1,5 +1,5 @@
 //select_(c,z) : mux to select which input connects to C/Z FF
-module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry, input [2:0] alu_op, input [1:0] pc_mux, reg_write_mux, input alu_in_mux,reg_B_mux, select_c, select_z, write_c, write_z,
+module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry, input [2:0] alu_op, input [1:0] pc_mux, reg_write_mux, alu_in_mux, input reg_B_mux, select_c, select_z, write_c, write_z,
 	output reg C, Z, output [18:0] IF_ID_instruction);
 //PC
 //Instruction memory
@@ -38,9 +38,9 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	wire [1:0] EX_MEM_reg_write_mux;
 	
 		//controller
-	wire ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_in_mux, ID_EX_select_c, ID_EX_select_z, ID_EX_write_c, ID_EX_write_z;
+	wire ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_select_c, ID_EX_select_z, ID_EX_write_c, ID_EX_write_z;
 	wire	[2:0] ID_EX_alu_op;
-	wire	[1:0] ID_EX_reg_write_mux;
+	wire	[1:0] ID_EX_reg_write_mux, ID_EX_alu_in_mux; //no need to emphasise [1:0] ?
 	
 	//MEM_WB
 	wire [7:0] MEM_WB_mem_out_data, MEM_WB_alu_out, MEM_WB_shift_out;
@@ -105,8 +105,10 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 		alu_A <= ID_EX_A;
 		//$display("alu A %b", alu_A);
 		case(ID_EX_alu_in_mux)
-			1'b0: alu_B <= ID_EX_B;
-			1'b1:begin $display("alu B %b", ID_EX_instruction[7:0]); alu_B <= ID_EX_instruction[7:0]; end
+			2'b0: alu_B <= ID_EX_B;
+			2'b1:begin $display("alu B %b", ID_EX_instruction[7:0]); alu_B <= ID_EX_instruction[7:0]; end
+			2'b10: alu_B <= EX_MEM_alu_out; //MEM forward to EX 
+			2'b11: alu_B <= reg_write_data; //W_B forward to EX
 		endcase 
 		alu_cin <= ID_EX_alu_use_carry ? C : 1'b0;
 		
@@ -165,7 +167,8 @@ module test_data_path();
 	reg clk = 1'b0, reset, mem_write, reg_write, push, pop, alu_use_carry;
 	reg [2:0] alu_op;
 	reg [1:0] pc_mux, reg_write_mux;
-	reg alu_in_mux,reg_B_mux, select_c, select_z, write_c, write_z;
+	reg [1:0] alu_in_mux;
+	reg reg_B_mux, select_c, select_z, write_c, write_z;
 	wire C, Z;
 	wire [18:0] instruction;
 	DataPath dp(clk, reset, mem_write, reg_write, push, pop, alu_use_carry, alu_op, pc_mux, reg_write_mux, alu_in_mux,reg_B_mux, select_c, select_z, write_c, write_z, C, Z, instruction); //but in pipeline, current instruction is ID level one
@@ -179,9 +182,9 @@ module test_data_path();
 		reset = 1'b1;
 		{write_c, write_z} = 2'b11;
 		reg_write = 1'b1;
-		alu_in_mux = 1'b1;
+		alu_in_mux = 2'b1;
 		#10 reset = 1'b0;
-		#14 alu_in_mux = 1'b0;
+		#14 alu_in_mux = 2'b0;
 		#30 $stop;
 	end
 

@@ -1,7 +1,7 @@
 //comment help :  [/ASM Command]
 //@TODO change = to <= (non-blocking)
 //select_(c,z) : mux to select which input connects to C/Z FF
-module Controller(input clk, reset, C, Z, input [18:0] instruction, output reg mem_write, reg_write, push, pop, output alu_use_carry, output [2:0] alu_op, output reg [1:0] pc_mux, reg_write_mux, output reg alu_in_mux,reg_B_mux, select_c, select_z, write_c, write_z);
+module Controller(input clk, reset, C, Z, input [18:0] instruction, output reg mem_write, reg_write, push, pop, output alu_use_carry, output [2:0] alu_op, output reg [1:0] pc_mux, reg_write_mux, alu_in_mux, output reg reg_B_mux, select_c, select_z, write_c, write_z);
 	//ALU
 	ALUController alu_cntrl(instruction, alu_use_carry, alu_op);//in ha ro wire gereftam ke rahat betoonam be in yeki module pas bedameshoon
 	//Branch
@@ -17,13 +17,13 @@ module Controller(input clk, reset, C, Z, input [18:0] instruction, output reg m
 				mem_write = instruction[14];//on [/STM]
 				reg_write = ~instruction[14];//on [/LDM]
 				reg_B_mux = 1'b1;
-				alu_in_mux = 1'b1;
+				alu_in_mux = 2'b1;
 				reg_write_mux = 2'b10;
 			end
 			3'b0??: begin //Arithmetic
 				reg_write = 1'b1;
 				reg_B_mux = 1'b0;
-				alu_in_mux = instruction[17]; //immediate or register
+				alu_in_mux = {1'b0,instruction[17]}; //immediate or register
 				reg_write_mux = 2'b0;
 				{select_c, select_z} = 2'b00;
 				{write_c, write_z}   = 2'b11;
@@ -92,8 +92,8 @@ module test_controller();
 	reg [18:0] instruction;
 	wire mem_write, reg_write, push, pop, alu_use_carry;
 	wire [2:0] alu_op;
-	wire [1:0] pc_mux, reg_write_mux;
-	wire alu_in_mux,reg_B_mux, select_c, select_z, write_c, write_z;
+	wire [1:0] pc_mux, reg_write_mux, alu_in_mux;
+	wire reg_B_mux, select_c, select_z, write_c, write_z;
 	
 	Controller cntrl(clk, reset, C, Z, instruction,
 					mem_write, reg_write, push, pop, alu_use_carry,
