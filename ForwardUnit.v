@@ -38,7 +38,10 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 	end
 	
 	always@(*) begin
-      L_1_dependency = 0;
+		//default values
+		L_1_dependency = 0;
+		{forward_A,forward_mem_EX,forward_mem_MEM} = 0;
+		forward_B = ID_EX_alu_B_mux;
 	  
 		//iR-Type
 		if(type_alu) //R-Type instructions
@@ -47,25 +50,28 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 				//rtype -> rtype
 				//L-1
 				if(ID_EX_A == EX_MEM_DST && next_type_alu)
-					begin forward_A = EX_MEM_alu_out; L_1_dependency = 1; end //
+					begin 
+					forward_A = 2'b10;//EX_MEM_alu_out; 
+					L_1_dependency = 1; 
+					end //
 				else if(ID_EX_B == EX_MEM_DST && !type_imm && next_type_alu)
-					forward_B = EX_MEM_alu_out; //EX_MEM_ alu out
+					forward_B = 2'b10; //EX_MEM_ alu out
 				//L-2
 				if(!L_1_dependency) 
 				begin
 					if(ID_EX_A == MEM_WB_DST && next2_type_alu)
-						forward_A = reg_write_data; //reg write data
+						forward_A = 2'b11; //reg write data
 					else if(ID_EX_B == MEM_WB_DST && !type_imm && next2_type_alu)
-						forward_B = reg_write_data; //reg write data
+						forward_B = 2'b11; //reg write data
 				end
 				
 				//lw -> rtype
 				if(next2_type_lw)
 				begin
 					if(ID_EX_A == MEM_WB_DST)
-						forward_A = reg_write_data; //reg write data
+						forward_A = 2'b11; //reg write data
 					else if (ID_EX_B == MEM_WB_DST && ! type_imm)
-						forward_B = reg_write_data; //reg write data
+						forward_B = 2'b11; //reg write data
 				end
             end
 			
@@ -74,11 +80,11 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 			begin
 				if(ID_EX_A == EX_MEM_DST && next_type_alu)//L-1
 				begin
-					forward_A = EX_MEM_alu_out; //EX_MEM_alu_out
+					forward_A = 2'b10; //EX_MEM_alu_out
 					L_1_dependency = 1'b1;
 				end
 				else if(ID_EX_A == MEM_WB_DST && !L_1_dependency && next2_type_alu)//L-2
-					forward_A = TEMP;// reg wire data
+					forward_A = 2'b11;// reg wire data
 			end
 		
 		if(type_sw)//RT-SW
@@ -89,10 +95,10 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 				if(next_type_alu && ID_EX_DST == EX_MEM_DST)//L-1
 				begin 
 					L_1_dependency = 1'b1;
-					forward_mem_EX = EX_MEM_alu_out; //EX/MEM alu out
+					forward_mem_EX = 2'b10; //EX/MEM alu out
 				end
 				else if(!L_1_dependency && next2_type_alu && ID_EX_DST == MEM_WB_DST)//L-2
-					forward_mem_EX = reg_write_data; // reg write data
+					forward_mem_EX = 2'b11; // reg write data
 			end
 			
 			// add ($r1), ... -> SW $r0, 100($r1)
@@ -101,10 +107,10 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 				if(next_type_alu && ID_EX_A == EX_MEM_DST)//L-1
 				begin 
 					L_1_dependency = 1'b1;
-					forward_A = EX_MEM_alu_out; //EX/MEM alu out
+					forward_A = 2'b10; //EX/MEM alu out
 				end
 				else if(!L_1_dependency && next2_type_alu && ID_EX_A == MEM_WB_DST)//L-2
-					forward_A = reg_write_data; // reg write data
+					forward_A = 2'b11; // reg write data
 			end
 		end	
 	end
