@@ -1,8 +1,8 @@
-module IF_ID (input clk, reset, flush, [18:0]instruction, input [11:0] pc,
+module IF_ID (input clk, loadbar, reset, flush, [18:0]instruction, input [11:0] pc,
 	output [18:0]IF_ID_instruction, output [11:0] IF_ID_pc );
 	
-	M_S_FF #(19) inst_reg(clk, reset|flush, instruction, IF_ID_instruction);
-	M_S_FF #(12) pc_reg(clk, reset|flush, pc, IF_ID_pc);
+	M_S_FF #(19) inst_reg(clk & ~loadbar, reset|flush, instruction, IF_ID_instruction);
+	M_S_FF #(12) pc_reg(clk & ~loadbar, reset|flush, pc, IF_ID_pc);
 
 endmodule
 

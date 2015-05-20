@@ -1,6 +1,6 @@
 //select_(c,z) : mux to select which input connects to C/Z FF
-module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry, input [2:0] alu_op, input [1:0] pc_mux, reg_write_mux, forward_A, forward_B, input forward_mem_MEM, alu_B_mux, reg_B_mux, select_c, select_z, write_c, write_z,
-	output reg C, Z, next_C, next_Z, output [18:0] IF_ID_instruction, output ID_EX_alu_B_mux);
+module DataPath(input clk, reset, IF_ID_loadbar, pc_writebar, ID_EX_flush, mem_write, reg_write, push, pop, alu_use_carry, input [2:0] alu_op, input [1:0] pc_mux, reg_write_mux, forward_A, forward_B, input forward_mem_MEM, alu_B_mux, reg_B_mux, select_c, select_z, write_c, write_z,
+	output reg C, Z, next_C, next_Z, output [18:0] instruction, IF_ID_instruction, output ID_EX_alu_B_mux);
 //PC
 //Instruction memory
 //register file
@@ -16,7 +16,7 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	
 	//pc & inst Memory
 	reg  [11:0] pc, next_pc;
-	wire [18:0] instruction;
+	//wire [18:0] instruction;
 	//reg pc_enable;
 	
 	//IF_ID
@@ -81,9 +81,9 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	ALU 	alu(alu_op , alu_A, alu_B, alu_cin, alu_out, alu_co, alu_z); 
 	BarrelShifter bs(shift_data, bitcount,  dir, sh_roBar, shift_out, shift_c, shift_z);
 	
-	IF_ID if_id(clk, reset, flush, instruction, pc, IF_ID_instruction, IF_ID_pc);
+	IF_ID if_id(clk, IF_ID_loadbar, reset, flush, instruction, pc, IF_ID_instruction, IF_ID_pc);
 	
-	ID_EX id_ex(clk, reset, reg_data_A, reg_data_B, IF_ID_instruction, mem_write, reg_write, alu_use_carry, alu_B_mux, select_c, select_z, write_c, write_z, alu_op, reg_write_mux, ID_EX_A, ID_EX_B, ID_EX_instruction, ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_B_mux, ID_EX_select_c,ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, ID_EX_alu_op, ID_EX_reg_write_mux);
+	ID_EX id_ex(clk, reset, ID_EX_flush, reg_data_A, reg_data_B, IF_ID_instruction, mem_write, reg_write, alu_use_carry, alu_B_mux, select_c, select_z, write_c, write_z, alu_op, reg_write_mux, ID_EX_A, ID_EX_B, ID_EX_instruction, ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_B_mux, ID_EX_select_c,ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, ID_EX_alu_op, ID_EX_reg_write_mux);
 
 	EX_MEM ex_mem(clk, reset, alu_out, ID_EX_B, shift_out, ID_EX_mem_write, ID_EX_reg_write, ID_EX_instruction, ID_EX_reg_write_mux, EX_MEM_alu_out, EX_MEM_B,EX_MEM_shift_out, EX_MEM_mem_write, EX_MEM_reg_write, EX_MEM_instruction, EX_MEM_reg_write_mux);
 	
@@ -91,12 +91,14 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	
 	always @(*) begin //calculate the new pc
 		//PC
-		case(pc_mux)
-			2'b00: next_pc <= pc + 1;
-			2'b01: next_pc <= pc + IF_ID_instruction[7:0]; //Branch Addr | IF_ID_pc+1 == pc  
-			2'b10: next_pc <= IF_ID_instruction[11:0]; //JMP Addr | from ID level
-			2'b11: next_pc <= stack_out; //RET Addr
-		endcase
+		if(!pc_writebar) begin
+			case(pc_mux)
+				2'b00: next_pc <= pc + 1;
+				2'b01: next_pc <= pc + IF_ID_instruction[7:0]; //Branch Addr | IF_ID_pc+1 == pc  
+				2'b10: next_pc <= IF_ID_instruction[11:0]; //JMP Addr | from ID level
+				2'b11: next_pc <= stack_out; //RET Addr
+			endcase
+		end
 		
 		//Stack
 		stack_in <= IF_ID_pc + 1;// 
