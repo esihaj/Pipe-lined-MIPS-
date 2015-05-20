@@ -1,6 +1,6 @@
 //select_(c,z) : mux to select which input connects to C/Z FF
-module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry, input [2:0] alu_op, input [1:0] pc_mux, reg_write_mux, alu_in_mux, input reg_B_mux, select_c, select_z, write_c, write_z,
-	output reg C, Z, output [18:0] IF_ID_instruction);
+module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry, input [2:0] alu_op, input [1:0] pc_mux, reg_write_mux, forward_A, forward_B, input alu_B_mux, reg_B_mux, select_c, select_z, write_c, write_z,
+	output reg C, Z, output [18:0] IF_ID_instruction, output ID_EX_alu_B_mux);
 //PC
 //Instruction memory
 //register file
@@ -40,7 +40,7 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 		//controller
 	wire ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_select_c, ID_EX_select_z, ID_EX_write_c, ID_EX_write_z;
 	wire	[2:0] ID_EX_alu_op;
-	wire	[1:0] ID_EX_reg_write_mux, ID_EX_alu_in_mux; //no need to emphasise [1:0] ?
+	wire	[1:0] ID_EX_reg_write_mux;
 	
 	//MEM_WB
 	wire [7:0] MEM_WB_mem_out_data, MEM_WB_alu_out, MEM_WB_shift_out;
@@ -81,7 +81,7 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 	
 	IF_ID if_id(clk, reset, flush, instruction, pc, IF_ID_instruction, IF_ID_pc);
 	
-	ID_EX id_ex(clk, reset, reg_data_A, reg_data_B, IF_ID_instruction, mem_write, reg_write, alu_use_carry, alu_in_mux, select_c, select_z, write_c, write_z, alu_op, reg_write_mux, ID_EX_A, ID_EX_B, ID_EX_instruction, ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_in_mux, ID_EX_select_c,ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, ID_EX_alu_op, ID_EX_reg_write_mux);
+	ID_EX id_ex(clk, reset, reg_data_A, reg_data_B, IF_ID_instruction, mem_write, reg_write, alu_use_carry, alu_B_mux, select_c, select_z, write_c, write_z, alu_op, reg_write_mux, ID_EX_A, ID_EX_B, ID_EX_instruction, ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_B_mux, ID_EX_select_c,ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, ID_EX_alu_op, ID_EX_reg_write_mux);
 
 	EX_MEM ex_mem(clk, reset, alu_out, ID_EX_B, shift_out, ID_EX_mem_write, ID_EX_reg_write, ID_EX_instruction, ID_EX_reg_write_mux, EX_MEM_alu_out, EX_MEM_B,EX_MEM_shift_out, EX_MEM_mem_write, EX_MEM_reg_write, EX_MEM_instruction, EX_MEM_reg_write_mux);
 	
@@ -102,9 +102,19 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 		//ALU
 			//$display("ALU time %t", $time);
 			//$display("reg A %b", reg_data_A);		
-		alu_A <= ID_EX_A;
-		//$display("alu A %b", alu_A);
-		case(ID_EX_alu_in_mux)
+			//$display("alu A %b", alu_A);
+	
+		//Forwarding
+		//forward_A <= 2'b0;
+		
+		case(forward_A)
+			2'b0: alu_A <= ID_EX_A; 
+			2'b10: alu_A <= EX_MEM_alu_out; //MEM forward to EX 
+			2'b11: alu_A <= reg_write_data; //W_B forward to EX
+			default: alu_A <= ID_EX_A;
+		endcase
+		
+		case(forward_B) // must be FORWARD B control signal
 			2'b0: alu_B <= ID_EX_B;
 			2'b1:begin $display("alu B %b", ID_EX_instruction[7:0]); alu_B <= ID_EX_instruction[7:0]; end
 			2'b10: alu_B <= EX_MEM_alu_out; //MEM forward to EX 
@@ -167,24 +177,25 @@ module test_data_path();
 	reg clk = 1'b0, reset, mem_write, reg_write, push, pop, alu_use_carry;
 	reg [2:0] alu_op;
 	reg [1:0] pc_mux, reg_write_mux;
-	reg [1:0] alu_in_mux;
-	reg reg_B_mux, select_c, select_z, write_c, write_z;
+	reg [1:0] forward_A, forward_B;
+	reg alu_B_mux, reg_B_mux, select_c, select_z, write_c, write_z;
 	wire C, Z;
 	wire [18:0] instruction;
-	DataPath dp(clk, reset, mem_write, reg_write, push, pop, alu_use_carry, alu_op, pc_mux, reg_write_mux, alu_in_mux,reg_B_mux, select_c, select_z, write_c, write_z, C, Z, instruction); //but in pipeline, current instruction is ID level one
+	DataPath dp(clk, reset, mem_write, reg_write, push, pop, alu_use_carry, alu_op, pc_mux, reg_write_mux, forward_A, forward_B, alu_B_mux,reg_B_mux, select_c, select_z, write_c, write_z, C, Z, instruction, ); //but in pipeline, current instruction is ID level one
 	
 	
 	
 	initial repeat(10) #5 clk = ~clk;
 	
 	initial begin
-		{reset, mem_write, reg_write, push, pop, alu_use_carry, alu_op, pc_mux, reg_write_mux, alu_in_mux,reg_B_mux, select_c, select_z, write_c, write_z} = 0;
+		{reset, mem_write, reg_write, push, pop, alu_use_carry, alu_op, pc_mux, reg_write_mux, forward_A, forward_B, alu_B_mux,reg_B_mux, select_c, select_z, write_c, write_z} = 0;
 		reset = 1'b1;
 		{write_c, write_z} = 2'b11;
 		reg_write = 1'b1;
-		alu_in_mux = 2'b1;
+		forward_A = 2'b0;
+		alu_B_mux = 1'b1;
 		#10 reset = 1'b0;
-		#14 alu_in_mux = 2'b0;
+		#14 alu_B_mux = 1'b0;
 		#30 $stop;
 	end
 
