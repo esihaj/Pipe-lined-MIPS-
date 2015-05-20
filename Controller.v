@@ -1,12 +1,12 @@
 //comment help :  [/ASM Command]
 //@TODO change = to <= (non-blocking)
 //select_(c,z) : mux to select which input connects to C/Z FF
-module Controller(input clk, reset, C, Z, input [18:0] instruction, output reg mem_write, reg_write, push, pop, output alu_use_carry, output [2:0] alu_op, output reg [1:0] pc_mux, reg_write_mux, output reg alu_B_mux, reg_B_mux, select_c, select_z, write_c, write_z);
+module Controller(input clk, reset, C, Z, next_C, next_Z, input [18:0] instruction, output reg mem_write, reg_write, push, pop, output alu_use_carry, output [2:0] alu_op, output reg [1:0] pc_mux, reg_write_mux, output reg alu_B_mux, reg_B_mux, select_c, select_z, write_c, write_z, output do_branch);
 	//ALU
 	ALUController alu_cntrl(instruction, alu_use_carry, alu_op);//in ha ro wire gereftam ke rahat betoonam be in yeki module pas bedameshoon
 	//Branch
-	wire do_branch;
-	BranchController branch_cntrl(instruction, C, Z, do_branch);
+	//wire do_branch;
+	BranchController branch_cntrl(instruction, next_C, next_Z, do_branch);
 	//Others
 	always@(instruction, C,Z, do_branch, reset) begin
 		$display("instruction T-%t %b", $time, instruction);
