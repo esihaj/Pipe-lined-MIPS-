@@ -1,5 +1,5 @@
 //select_(c,z) : mux to select which input connects to C/Z FF
-module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry, input [2:0] alu_op, input [1:0] pc_mux, reg_write_mux, forward_A, forward_B, input alu_B_mux, reg_B_mux, select_c, select_z, write_c, write_z,
+module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry, input [2:0] alu_op, input [1:0] pc_mux, reg_write_mux, forward_A, forward_B, input forward_mem, alu_B_mux, reg_B_mux, select_c, select_z, write_c, write_z,
 	output reg C, Z, output [18:0] IF_ID_instruction, output ID_EX_alu_B_mux);
 //PC
 //Instruction memory
@@ -113,7 +113,7 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 			2'b11: alu_A <= reg_write_data; //W_B forward to EX
 			default: alu_A <= ID_EX_A;
 		endcase
-		
+	
 		case(forward_B) // must be FORWARD B control signal
 			2'b0: alu_B <= ID_EX_B;
 			2'b1:begin $display("alu B %b", ID_EX_instruction[7:0]); alu_B <= ID_EX_instruction[7:0]; end
@@ -124,7 +124,10 @@ module DataPath(input clk, reset, mem_write, reg_write, push, pop, alu_use_carry
 		
 		//Data Memory
 		mem_addr <= EX_MEM_alu_out;
-		mem_write_data <= EX_MEM_B;
+		case (forward_mem)
+			1'b0: 	mem_write_data <= EX_MEM_B;
+			1'b1:	mem_write_data <= MEM_WB_mem_out_data; //mem to mem copy forwarding (ld st)
+		endcase
 		
 		//Shifter
 		bitcount <= ID_EX_instruction[8:5];
@@ -178,7 +181,7 @@ module test_data_path();
 	reg [2:0] alu_op;
 	reg [1:0] pc_mux, reg_write_mux;
 	reg [1:0] forward_A, forward_B;
-	reg alu_B_mux, reg_B_mux, select_c, select_z, write_c, write_z;
+	reg forward_mem, alu_B_mux, reg_B_mux, select_c, select_z, write_c, write_z;
 	wire C, Z;
 	wire [18:0] instruction;
 	DataPath dp(clk, reset, mem_write, reg_write, push, pop, alu_use_carry, alu_op, pc_mux, reg_write_mux, forward_A, forward_B, alu_B_mux,reg_B_mux, select_c, select_z, write_c, write_z, C, Z, instruction, ); //but in pipeline, current instruction is ID level one
@@ -188,7 +191,7 @@ module test_data_path();
 	initial repeat(10) #5 clk = ~clk;
 	
 	initial begin
-		{reset, mem_write, reg_write, push, pop, alu_use_carry, alu_op, pc_mux, reg_write_mux, forward_A, forward_B, alu_B_mux,reg_B_mux, select_c, select_z, write_c, write_z} = 0;
+		{reset, mem_write, reg_write, push, pop, alu_use_carry, alu_op, pc_mux, reg_write_mux, forward_mem, forward_A, forward_B, alu_B_mux,reg_B_mux, select_c, select_z, write_c, write_z} = 0;
 		reset = 1'b1;
 		{write_c, write_z} = 2'b11;
 		reg_write = 1'b1;
