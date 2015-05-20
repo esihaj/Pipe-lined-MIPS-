@@ -1,5 +1,5 @@
 module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_instruction,
-                    input [1:0] ID_EX_alu_B_mux,  output reg [1:0]forward_A, forward_B, output reg forward_mem_MEM, [1:0] forward_mem_EX);
+                    input ID_EX_alu_B_mux,  output reg [1:0]forward_A, forward_B, output reg forward_mem_MEM, [1:0] forward_mem_EX);
 	//aliases
   	wire [2:0] ID_EX_A, ID_EX_B, ID_EX_DST;
   	wire [2:0] EX_MEM_DST, MEM_WB_DST;
@@ -41,7 +41,7 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 		//default values
 		L_1_dependency = 0;
 		{forward_A,forward_mem_EX,forward_mem_MEM} = 0;
-		forward_B = ID_EX_alu_B_mux;
+		forward_B = {1'b0,ID_EX_alu_B_mux};
 	  
 		//iR-Type
 		if(type_alu) //R-Type instructions
