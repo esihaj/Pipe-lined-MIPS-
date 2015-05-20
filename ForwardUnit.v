@@ -1,5 +1,5 @@
 module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_instruction,
-                    input [1:0] ID_EX_alu_B_mux,  output reg [1:0]forward_A, forward_B, output reg forward_mem_MEM, [1:0] forward_mem_EX)
+                    input [1:0] ID_EX_alu_B_mux,  output reg [1:0]forward_A, forward_B, output reg forward_mem_MEM, [1:0] forward_mem_EX);
 	//aliases
   	wire [2:0] ID_EX_A, ID_EX_B, ID_EX_DST;
   	wire [2:0] EX_MEM_DST, MEM_WB_DST;
@@ -20,14 +20,14 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 		if(ID_EX_instruction[17] == 1'b1)
 			type_imm = 1'b1;
 		
-		if (ID_EX_instruction[18:14] = 5'b10000) // Load Word
+		if (ID_EX_instruction[18:14] == 5'b10000) // Load Word
 			type_lw = 1'b1;
-		if (MEM_WB_instruction[18:14] = 5'b10000) // NEXT OP: Load Word
-			next_type_lw = 1'b1;
-		if (MEM_WB_instruction[18:14] = 5'b10000) // NEXT OP: Load Word
-			next_type_lw = 1'b1;
+		if (EX_MEM_instruction[18:14] == 5'b10000) // NEXT OP: Load Word
+			next2_type_lw = 1'b1;
+		if (MEM_WB_instruction[18:14] == 5'b10000) // NEXT OP: Load Word
+			next2_type_lw = 1'b1;
 			
-		if(ID_EX_instruction[18:14] = 5'b10001)//Store Word
+		if(ID_EX_instruction[18:14] == 5'b10001)//Store Word
 			type_sw = 1'b1;
 		
 		if(EX_MEM_instruction[18] == 1'b0)
@@ -46,38 +46,38 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 			begin
 				//rtype -> rtype
 				//L-1
-				if(ID_EX_A == EX_MEM_DST)
-					begin forward_A = TEMP; L_1_dependency = 1; end //EX_MEM_ alu out
-				else if(ID_EX_B == EX_MEM_DST && !type_imm )
-					forward_B = TEMP; //EX_MEM_ alu out
+				if(ID_EX_A == EX_MEM_DST && next_type_alu)
+					begin forward_A = EX_MEM_alu_out; L_1_dependency = 1; end //
+				else if(ID_EX_B == EX_MEM_DST && !type_imm && next_type_alu)
+					forward_B = EX_MEM_alu_out; //EX_MEM_ alu out
 				//L-2
 				if(!L_1_dependency) 
 				begin
-					if(ID_EX_A == MEM_WB_DST)
-						forward_A = TEMP; //reg write data
-					else if(ID_EX_B == MEM_WB_DST && !type_imm)
-						forward_B = TEMP; //reg write data
+					if(ID_EX_A == MEM_WB_DST && next2_type_alu)
+						forward_A = reg_write_data; //reg write data
+					else if(ID_EX_B == MEM_WB_DST && !type_imm && next2_type_alu)
+						forward_B = reg_write_data; //reg write data
 				end
 				
 				//lw -> rtype
-				if(next_type_lw)
+				if(next2_type_lw)
 				begin
 					if(ID_EX_A == MEM_WB_DST)
-						forward_A = TEMP; //reg write data
+						forward_A = reg_write_data; //reg write data
 					else if (ID_EX_B == MEM_WB_DST && ! type_imm)
-						forward_B = TEMP; //reg write data
+						forward_B = reg_write_data; //reg write data
 				end
             end
 			
-		if(type_lw)
+		if(type_lw) //rtype -> lw 
 			if(EX_MEM_DST != 3'b0) //not $r0
 			begin
-				if(ID_EX_A == EX_MEM_DST)//L-1
+				if(ID_EX_A == EX_MEM_DST && next_type_alu)//L-1
 				begin
-					forward_A = TEMP; //EX_MEM_ alu out
+					forward_A = EX_MEM_alu_out; //EX_MEM_alu_out
 					L_1_dependency = 1'b1;
 				end
-				else if(ID_EX_A == MEM_WB_DST && !L_1_dependency)//L-2
+				else if(ID_EX_A == MEM_WB_DST && !L_1_dependency && next2_type_alu)//L-2
 					forward_A = TEMP;// reg wire data
 			end
 		
@@ -89,10 +89,10 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 				if(next_type_alu && ID_EX_DST == EX_MEM_DST)//L-1
 				begin 
 					L_1_dependency = 1'b1;
-					forward_mem_EX = TEMP; //EX/MEM alu out
+					forward_mem_EX = EX_MEM_alu_out; //EX/MEM alu out
 				end
 				else if(!L_1_dependency && next2_type_alu && ID_EX_DST == MEM_WB_DST)//L-2
-					forward_mem_EX = TEMP; // reg write data
+					forward_mem_EX = reg_write_data; // reg write data
 			end
 			
 			// add ($r1), ... -> SW $r0, 100($r1)
@@ -101,22 +101,11 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 				if(next_type_alu && ID_EX_A == EX_MEM_DST)//L-1
 				begin 
 					L_1_dependency = 1'b1;
-					forward_A = TEMP; //EX/MEM alu out
+					forward_A = EX_MEM_alu_out; //EX/MEM alu out
 				end
 				else if(!L_1_dependency && next2_type_alu && ID_EX_A == MEM_WB_DST)//L-2
-					forward_A = TEMP; // reg write data
+					forward_A = reg_write_data; // reg write data
 			end
-		end
-	
-		if(type_sw) //Mem to Mem Copy
-			if(MEM_WB_DST != 3'b000) //not $r0
-			begin
-				if(MEM_WB_DST == EX_MEM_DST)
-				begin
-					forward_mem_MEM = TEMP; // reg write data
-					L_1_dependency = 1'b1;
-				end
-				else if(!L_1_dependency && )
-			end
+		end	
 	end
 endmodule

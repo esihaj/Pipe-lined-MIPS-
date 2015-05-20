@@ -1,5 +1,5 @@
 //select_(c,z) : mux to select which input connects to C/Z FF
-module DataPath(input clk, reset, IF_ID_loadbar, pc_writebar, ID_EX_flush, mem_write, reg_write, push, pop, alu_use_carry, input [2:0] alu_op, input [1:0] pc_mux, reg_write_mux, forward_A, forward_B, input forward_mem_MEM, alu_B_mux, reg_B_mux, select_c, select_z, write_c, write_z,
+module DataPath(input clk, reset, IF_ID_loadbar, pc_writebar, ID_EX_flush, mem_write, reg_write, push, pop, alu_use_carry, input [2:0] alu_op, input [1:0] pc_mux, reg_write_mux, forward_A, forward_B, input forward_mem_MEM,  [1:0] forward_mem_EX, input alu_B_mux, reg_B_mux, select_c, select_z, write_c, write_z,
 	output reg C, Z, next_C, next_Z, output [18:0] instruction, IF_ID_instruction, output ID_EX_alu_B_mux);
 //PC
 //Instruction memory
@@ -40,7 +40,8 @@ module DataPath(input clk, reset, IF_ID_loadbar, pc_writebar, ID_EX_flush, mem_w
 	wire [1:0] EX_MEM_reg_write_mux;
 	
 		//controller
-	wire ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_select_c, ID_EX_select_z, ID_EX_write_c, ID_EX_write_z;
+	reg 	ID_EX_mem_write;
+	wire  	ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_select_c, ID_EX_select_z, ID_EX_write_c, ID_EX_write_z;
 	wire	[2:0] ID_EX_alu_op;
 	wire	[1:0] ID_EX_reg_write_mux;
 	
@@ -125,6 +126,14 @@ module DataPath(input clk, reset, IF_ID_loadbar, pc_writebar, ID_EX_flush, mem_w
 			2'b11: alu_B <= reg_write_data; //W_B forward to EX
 		endcase 
 		alu_cin <= ID_EX_alu_use_carry ? C : 1'b0;
+		
+		case(forward_mem_EX)
+			2'b0: ID_EX_mem_write <= ID_EX_B;
+			2'b10: ID_EX_mem_write <= EX_MEM_alu_out; //MEM forward to EX 
+			2'b11: ID_EX_mem_write <= reg_write_data; //W_B forward to EX		
+			default: ID_EX_mem_write <= ID_EX_B;
+
+			endcase
 		
 		//Data Memory
 		mem_addr <= EX_MEM_alu_out;
