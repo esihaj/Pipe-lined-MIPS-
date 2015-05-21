@@ -9,7 +9,7 @@ module Controller(input clk, reset, C, Z, next_C, next_Z, input [18:0] instructi
 	BranchController branch_cntrl(instruction, next_C, next_Z, do_branch);
 	//Others
 	always@(instruction, C,Z, do_branch, reset) begin
-		$display("instruction T-%t %b", $time, instruction);
+		//$display("instruction T-%t %b", $time, instruction);
 		{pc_mux, reg_write_mux, alu_B_mux,reg_B_mux, select_c, select_z, write_c, write_z} = 0;
 		{mem_write, reg_write, push, pop} = 0;
 		casex(instruction[18:16])
@@ -59,11 +59,13 @@ module Controller(input clk, reset, C, Z, next_C, next_Z, input [18:0] instructi
 endmodule
 
 module BranchController(input [18:0] instruction,input C,Z, output reg do_branch);
-	always@(instruction, C,Z)
+	always@(instruction, C,Z) begin
+		do_branch = 1'b0;
 		if(instruction[18:16] == 3'b101) // Branch Instruction
 			if(instruction[15] == 1'b0)			
 				 do_branch = instruction[14] ? ~Z : Z;
 			else do_branch = instruction[14] ? ~C : C;
+		end
 endmodule
 	
 module ALUController(input [18:0] instruction,output reg alu_use_carry, output reg [2:0] alu_op);

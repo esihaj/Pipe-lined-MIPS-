@@ -1,6 +1,6 @@
 //select_(c,z) : mux to select which input connects to C/Z FF
 module DataPath(input clk, reset, IF_ID_loadbar, pc_writebar, ID_EX_flush, mem_write, reg_write, push, pop, alu_use_carry, input [2:0] alu_op, input [1:0] pc_mux, reg_write_mux, forward_A, forward_B, input forward_mem_MEM,  [1:0] forward_mem_EX, input alu_B_mux, reg_B_mux, select_c, select_z, write_c, write_z,
-	output reg C, Z, next_C, next_Z, output [18:0] instruction, IF_ID_instruction, output ID_EX_alu_B_mux);
+	output reg C, Z, next_C, next_Z, output ID_EX_alu_B_mux, output [18:0] instruction, IF_ID_instruction, ID_EX_instruction, EX_MEM_instruction, MEM_WB_instruction);
 //PC
 //Instruction memory
 //register file
@@ -31,12 +31,12 @@ module DataPath(input clk, reset, IF_ID_loadbar, pc_writebar, ID_EX_flush, mem_w
 	
 	//ID_EX
 	wire [7:0] ID_EX_A, ID_EX_B;
-    wire [18:0] ID_EX_instruction;
+    //wire [18:0] ID_EX_instruction;
 	
 	//EX_MEM
 	wire [7:0] EX_MEM_alu_out, EX_MEM_B, EX_MEM_shift_out;
 	wire EX_MEM_mem_write, EX_MEM_reg_write;
-	wire [18:0] EX_MEM_instruction;
+	//wire [18:0] EX_MEM_instruction;
 	wire [1:0] EX_MEM_reg_write_mux;
 	
 		//controller
@@ -47,7 +47,7 @@ module DataPath(input clk, reset, IF_ID_loadbar, pc_writebar, ID_EX_flush, mem_w
 	
 	//MEM_WB
 	wire [7:0] MEM_WB_mem_out_data, MEM_WB_alu_out, MEM_WB_shift_out;
-	wire [18:0] MEM_WB_instruction;
+	//wire [18:0] MEM_WB_instruction;
 	wire [1:0] MEM_WB_reg_write_mux;
 	wire MEM_WB_reg_write;
 	
@@ -92,7 +92,7 @@ module DataPath(input clk, reset, IF_ID_loadbar, pc_writebar, ID_EX_flush, mem_w
 	
 	always @(*) begin //calculate the new pc
 		//PC
-		if(!pc_writebar) begin
+		if(~pc_writebar) begin
 			case(pc_mux)
 				2'b00: next_pc <= pc + 1;
 				2'b01: next_pc <= pc + IF_ID_instruction[7:0]; //Branch Addr | IF_ID_pc+1 == pc  
@@ -100,6 +100,7 @@ module DataPath(input clk, reset, IF_ID_loadbar, pc_writebar, ID_EX_flush, mem_w
 				2'b11: next_pc <= stack_out; //RET Addr
 			endcase
 		end
+		else next_pc <= pc;
 		
 		//Stack
 		stack_in <= IF_ID_pc + 1;// 
@@ -121,7 +122,7 @@ module DataPath(input clk, reset, IF_ID_loadbar, pc_writebar, ID_EX_flush, mem_w
 	
 		case(forward_B) // must be FORWARD B control signal
 			2'b0: alu_B <= ID_EX_B;
-			2'b1:begin $display("alu B %b", ID_EX_instruction[7:0]); alu_B <= ID_EX_instruction[7:0]; end
+			2'b1:begin /*$display("alu B %b", ID_EX_instruction[7:0]);*/ alu_B <= ID_EX_instruction[7:0]; end
 			2'b10: alu_B <= EX_MEM_alu_out; //MEM forward to EX 
 			2'b11: alu_B <= reg_write_data; //W_B forward to EX
 		endcase 

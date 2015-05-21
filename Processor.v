@@ -14,7 +14,7 @@
 	ForwardUnit fu(ID_EX_instruction, EX_MEM_instruction, MEM_WB_instruction,
                     ID_EX_alu_B_mux, forward_A, forward_B, forward_mem_MEM, forward_mem_EX);
 
-	HazardDetectionUnit hdu (instruction, IF_ID_instruction, do_branch, IF_ID_loadbar, IF_ID_flush, ID_EX_flush, pc_writebar);
+	HazardDetectionUnit hdu (clk, reset, instruction, IF_ID_instruction, do_branch, IF_ID_loadbar, IF_ID_flush, ID_EX_flush, pc_writebar);
 	
 	/*assign forward_A = 2'b0;
 	assign forward_B = {1'b0, ID_EX_alu_B_mux};
@@ -26,7 +26,7 @@
 				mem_write, reg_write, push, pop, alu_use_carry, alu_op,
 				pc_mux, reg_write_mux, forward_A, forward_B, forward_mem_MEM, forward_mem_EX, alu_B_mux, reg_B_mux,
 				select_c, select_z, write_c, write_z,
-				C, Z, next_C, next_Z, instruction, IF_ID_instruction, ID_EX_alu_B_mux);
+				C, Z, next_C, next_Z, ID_EX_alu_B_mux, instruction, IF_ID_instruction, ID_EX_instruction, EX_MEM_instruction, MEM_WB_instruction);
 endmodule
 
 module test_processor();
