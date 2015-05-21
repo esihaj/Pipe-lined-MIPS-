@@ -23,7 +23,7 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 		if (ID_EX_instruction[18:14] == 5'b10000) // Load Word
 			type_lw = 1'b1;
 		if (EX_MEM_instruction[18:14] == 5'b10000) // NEXT OP: Load Word
-			next2_type_lw = 1'b1;
+			next_type_lw = 1'b1;
 		if (MEM_WB_instruction[18:14] == 5'b10000) // NEXT OP: Load Word
 			next2_type_lw = 1'b1;
 			
@@ -42,9 +42,10 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 		L_1_dependency = 0;
 		{forward_A,forward_mem_EX,forward_mem_MEM} = 0;
 		forward_B = {1'b0,ID_EX_alu_B_mux};
-	  
+		$display("@time=%t type_alu=%b, 2_type_lw=%b,ID/EX_B=%b, MEM_WB_DST=%b, is_imm=%b",  $time,type_alu, next2_type_lw, ID_EX_B, MEM_WB_DST, type_imm);
 		//iR-Type
 		if(type_alu) //R-Type instructions
+		begin
 			if(EX_MEM_DST != 3'b0) //not $r0
 			begin
 				//rtype -> rtype
@@ -64,16 +65,21 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 					else if(ID_EX_B == MEM_WB_DST && !type_imm && next2_type_alu)
 						forward_B = 2'b11; //reg write data
 				end
-				
+			end
 				//lw -> rtype
+			if(MEM_WB_DST != 3'b0)
 				if(next2_type_lw)
 				begin
+					$display("\tnext == lw");
 					if(ID_EX_A == MEM_WB_DST)
 						forward_A = 2'b11; //reg write data
 					else if (ID_EX_B == MEM_WB_DST && ! type_imm)
+					begin
 						forward_B = 2'b11; //reg write data
+						$display("\t forward B 11");
+					end
 				end
-            end
+        end
 			
 		if(type_lw) //rtype -> lw 
 			if(EX_MEM_DST != 3'b0) //not $r0

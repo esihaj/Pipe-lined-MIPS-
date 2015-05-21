@@ -6,7 +6,7 @@ module HazardDetectionUnit (input clk,reset,  input [18:0]instruction, IF_ID_ins
 			state = 2'b0;
 		if(state > 2'b0)
 			state = state + 1'b1;	
-		$display ("hazard @%t : clk %b,  state %d",$time,  clk, state);
+		//$display ("hazard @%t : clk %b,  state %d",$time,  clk, state);
 	end
 	
 	always@(state) begin//output flags
@@ -26,10 +26,10 @@ module HazardDetectionUnit (input clk,reset,  input [18:0]instruction, IF_ID_ins
 		(instruction[18] == 1'b0 || instruction[18:16] == 3'b100)
 		)
 		begin
-			$display("Hazard time %t", $time);
+			/*$display("Hazard time %t", $time);
 			$display("inst  %b\nIF_ID %b", instruction[18:14], IF_ID_instruction[18:14]);
 			$display("IF_ID dst %b", IF_ID_instruction[13:11]);
-			$display("inst A %b, B %b", instruction[10:8], instruction[7:5]);
+			$display("inst A %b, B %b", instruction[10:8], instruction[7:5]);*/
 			//pc_writebar = 1'b1; IF_ID_loadbar = 1'b1; ID_EX_flush = 1'b1; 
 			state = 2'b01;
 		end 
