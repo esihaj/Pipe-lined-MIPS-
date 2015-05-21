@@ -1,6 +1,6 @@
 	module Processor(input clk, reset);
 	wire [18:0] instruction, IF_ID_instruction, ID_EX_instruction, EX_MEM_instruction, MEM_WB_instruction;
-	wire IF_ID_loadbar, pc_writebar, ID_EX_flush, mem_write, reg_write, push, pop, alu_use_carry;
+	wire IF_ID_loadbar, pc_writebar, ID_EX_flush, IF_ID_flush, mem_write, reg_write, push, pop, alu_use_carry;
 	wire [2:0] alu_op;
 	wire [1:0] pc_mux, reg_write_mux, forward_A, forward_B, forward_mem_EX;
 	wire forward_mem_MEM, alu_B_mux, ID_EX_alu_B_mux, reg_B_mux, select_c, select_z, write_c, write_z;
@@ -22,7 +22,7 @@
 	assign IF_ID_loadbar = 1'b0;
 	assign pc_writebar = 1'b0;
 	*/
-	DataPath dp(clk, reset, IF_ID_loadbar, pc_writebar, ID_EX_flush,
+	DataPath dp(clk, reset, IF_ID_loadbar, pc_writebar, IF_ID_flush, ID_EX_flush,
 				mem_write, reg_write, push, pop, alu_use_carry, alu_op,
 				pc_mux, reg_write_mux, forward_A, forward_B, forward_mem_MEM, forward_mem_EX, alu_B_mux, reg_B_mux,
 				select_c, select_z, write_c, write_z,
