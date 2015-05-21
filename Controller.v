@@ -62,10 +62,13 @@ module BranchController(input [18:0] instruction,input C,Z, output reg do_branch
 	always@(instruction, C,Z) begin
 		do_branch = 1'b0;
 		if(instruction[18:16] == 3'b101) // Branch Instruction
+		begin
+			$display("@time=%t, C=%b, Z=%b, useC=%b, N=%b",$time,C,Z,instruction[15],instruction[14]);
 			if(instruction[15] == 1'b0)			
 				 do_branch = instruction[14] ? ~Z : Z;
 			else do_branch = instruction[14] ? ~C : C;
 		end
+	end
 endmodule
 	
 module ALUController(input [18:0] instruction,output reg alu_use_carry, output reg [2:0] alu_op);
