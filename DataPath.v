@@ -79,7 +79,7 @@ module DataPath(input clk, reset, IF_ID_loadbar, pc_writebar, IF_ID_flush, ID_EX
 	DataMem data_mem (clk, EX_MEM_mem_write, mem_addr , mem_write_data, mem_out_data);
 	RegFile reg_file (clk, MEM_WB_reg_write, reg_addr_A, reg_addr_B, reg_addr_write, reg_write_data, reg_data_A, reg_data_B);
 	Stack 	stack(clk, reset, push,pop, stack_in, stack_out);
-	ALU 	alu(alu_op , alu_A, alu_B, alu_cin, alu_out, alu_co, alu_z); 
+	ALU 	alu(ID_EX_alu_op , alu_A, alu_B, alu_cin, alu_out, alu_co, alu_z); 
 	BarrelShifter bs(shift_data, bitcount,  dir, sh_roBar, shift_out, shift_c, shift_z);
 	
 	IF_ID if_id(clk, IF_ID_loadbar, reset, IF_ID_flush, instruction, pc, IF_ID_instruction, IF_ID_pc);
