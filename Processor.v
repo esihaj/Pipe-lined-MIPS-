@@ -35,6 +35,6 @@ module test_processor();
 	initial repeat(1000) #5 clk = ~clk;
 	initial begin
 		#6 reset = 1'b0;
-		#500 $stop;
+		#5000 $stop;
 	end
 endmodule
