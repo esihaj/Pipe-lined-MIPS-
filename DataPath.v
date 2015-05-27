@@ -174,14 +174,16 @@ module DataPath(input clk, reset, IF_ID_loadbar, pc_writebar, IF_ID_flush, ID_EX
 			1'b1: next_Z <= shift_z;
 		endcase
 	end
-	
-	always @(posedge clk, posedge reset)begin //set new values to registers
+
+	always @(clk, posedge reset)begin //set new values to registers
 		if(reset == 1'b0) begin
-			pc = next_pc;
+			if(clk) pc = next_pc; //posedge
+			else begin //negedge
 			if(ID_EX_write_c)
 				C = next_C;
 			if(ID_EX_write_z)
 				Z = next_Z;
+			end
 		end
 		else begin
 			{pc,C,Z} = 0;

@@ -39,10 +39,12 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 	
 	always@(*) begin
 		//default values
-		L_1_dependency = 0;
+		L_1_dependency = 1'b0;
 		{forward_A,forward_mem_EX,forward_mem_MEM} = 0;
 		forward_B = {1'b0,ID_EX_alu_B_mux};
-		//$display("@time=%t type_alu=%b, 2_type_lw=%b,ID/EX_B=%b, MEM_WB_DST=%b, is_imm=%b",  $time,type_alu, next2_type_lw, ID_EX_B, MEM_WB_DST, type_imm);
+		$display("@time=%t type_alu=%b, 2_type_alu=%b,ID/EX_B=%b, EXE_MEM_DST=%b, is_imm=%b",  $time,type_alu, next2_type_alu, ID_EX_A, EX_MEM_DST, type_imm);
+		$display("inst = %b", ID_EX_instruction);
+		$display("MEMWB inst = %b", MEM_WB_instruction);
 		//iR-Type
 		if(type_alu) //R-Type instructions
 		begin
@@ -53,19 +55,23 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 				if(ID_EX_A == EX_MEM_DST && next_type_alu)
 					begin 
 					forward_A = 2'b10;//EX_MEM_alu_out; 
-					L_1_dependency = 1; 
+					L_1_dependency = 1'b1; 
 					end //
 				else if(ID_EX_B == EX_MEM_DST && !type_imm && next_type_alu)
+					begin 
 					forward_B = 2'b10; //EX_MEM_ alu out
+					L_1_dependency = 1'b1;
+					end
 				//L-2
-				if(!L_1_dependency) 
+			end
+			if(!L_1_dependency && MEM_WB_DST != 3'b0) //not $r0
 				begin
+					$display("L-2 dependency");
 					if(ID_EX_A == MEM_WB_DST && next2_type_alu)
 						forward_A = 2'b11; //reg write data
 					else if(ID_EX_B == MEM_WB_DST && !type_imm && next2_type_alu)
 						forward_B = 2'b11; //reg write data
 				end
-			end
 				//lw -> rtype
 			if(MEM_WB_DST != 3'b0)
 				if(next2_type_lw)

@@ -13,6 +13,16 @@ module M_S_FF #(parameter width =1)(input clk, enable_bar, rst,[width-1:0]in, ou
 				out = middle;
 		end
 	end
+//rahe sade tar :D :	
+/*	always@(negedge clk, posedge rst) begin 
+	
+		if(rst)
+			out = 0;
+		else if(~enable_bar)
+			//if(~clk)
+				out = in;
+	end
+*/
 endmodule
 
 module test_M_S_FF();

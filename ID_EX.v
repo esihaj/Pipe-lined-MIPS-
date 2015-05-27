@@ -13,7 +13,7 @@ module ID_EX (input clk, reset, flush,
 	M_S_FF #(19) instruction(clk, 1'b0, reset|flush, IF_ID_instruction, ID_EX_instruction);
 	
 	M_S_FF #(13) controller(clk, 1'b0, reset|flush,
-		{mem_write, reg_write, alu_use_carry, alu_B_mux, select_c, select_z, write_c, write_z, alu_op, reg_write_mux},
+		{mem_write, reg_write, alu_use_carry, alu_B_mux, select_c, select_z, (IF_ID_instruction == 19'd0 || flush) ? 1'b0: write_c, (IF_ID_instruction == 19'd0 || flush) ? 1'b0: write_z, (IF_ID_instruction == 19'd0 || flush) ? 3'b100: alu_op, reg_write_mux},
 		{ID_EX_mem_write, ID_EX_reg_write, ID_EX_alu_use_carry, ID_EX_alu_B_mux, ID_EX_select_c, ID_EX_select_z, ID_EX_write_c, ID_EX_write_z, ID_EX_alu_op, ID_EX_reg_write_mux} );
 
 	

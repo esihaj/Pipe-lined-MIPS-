@@ -41,7 +41,11 @@ module HazardDetectionUnit (input clk,reset,  input [18:0]instruction, IF_ID_ins
 		if (hazard_state == 2'b10)
 			IF_ID_flush = 1'b1;
 	end
+<<<<<<< Updated upstream
 	
+=======
+	/*
+>>>>>>> Stashed changes
 	always@(jmp_state)
 	begin
 		IF_ID_loadbar = 1'b0;
@@ -51,7 +55,11 @@ module HazardDetectionUnit (input clk,reset,  input [18:0]instruction, IF_ID_ins
 		if (jmp_state == 2'b10)
 			IF_ID_flush = 1'b1;
 	end
+<<<<<<< Updated upstream
 	
+=======
+	*/
+>>>>>>> Stashed changes
 	always@(*) begin//deciding conditions
 		//jmp_state = 2'b0;
 		//stall 

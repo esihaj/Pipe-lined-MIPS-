@@ -35,6 +35,10 @@ module test_processor();
 	initial repeat(1000) #5 clk = ~clk;
 	initial begin
 		#6 reset = 1'b0;
+<<<<<<< Updated upstream
 		#5000 $stop;
+=======
+		#2000 $stop;
+>>>>>>> Stashed changes
 	end
 endmodule
