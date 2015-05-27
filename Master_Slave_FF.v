@@ -1,7 +1,7 @@
 //Master Slave Flip FLop with asynchronous reset (works on all of 1 side not just edges)
  
 module M_S_FF #(parameter width =1)(input clk, enable_bar, rst,[width-1:0]in, output reg [width-1:0] out);
-	always@(negedge clk, posedge rst) begin
+	always@(posedge clk) begin
 	
 		if(rst)
 			out = 0;
