@@ -42,6 +42,7 @@ module ForwardUnit (input [18:0]  ID_EX_instruction, EX_MEM_instruction, MEM_WB_
 		L_1_dependency = 1'b0;
 		{forward_A,forward_mem_EX,forward_mem_MEM} = 0;
 		forward_B = {1'b0,ID_EX_alu_B_mux};
+		//$display("@time=%t type_alu=%b, 2_type_lw=%b,ID/EX_B=%b, MEM_WB_DST=%b, is_imm=%b",  $time,type_alu, next2_type_lw, ID_EX_B, MEM_WB_DST, type_imm);
 		$display("@time=%t type_alu=%b, 2_type_alu=%b,ID/EX_B=%b, EXE_MEM_DST=%b, is_imm=%b",  $time,type_alu, next2_type_alu, ID_EX_A, EX_MEM_DST, type_imm);
 		$display("inst = %b", ID_EX_instruction);
 		$display("MEMWB inst = %b", MEM_WB_instruction);

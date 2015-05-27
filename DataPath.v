@@ -95,7 +95,7 @@ module DataPath(input clk, reset, IF_ID_loadbar, pc_writebar, IF_ID_flush, ID_EX
 		if(~pc_writebar) begin
 			case(pc_mux)
 				2'b00: next_pc <= pc + 1;
-				2'b01: next_pc <= pc + IF_ID_instruction[7:0]; //Branch Addr | IF_ID_pc+1 == pc  
+				2'b01: next_pc <= pc + 1 + IF_ID_instruction[7:0]; //Branch Addr | IF_ID_pc+1 == pc (if use stall) 
 				2'b10: next_pc <= IF_ID_instruction[11:0]; //JMP Addr | from ID level
 				2'b11: next_pc <= stack_out; //RET Addr
 			endcase
