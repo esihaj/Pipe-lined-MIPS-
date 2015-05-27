@@ -41,7 +41,7 @@ module HazardDetectionUnit (input clk,reset,  input [18:0]instruction, IF_ID_ins
 			$display("IF_ID dst %b", IF_ID_instruction[13:11]);
 			$display("inst A %b, B %b", instruction[10:8], instruction[7:5]);*/
 //			hazard_state = 2'b01;
-			IF_ID_loadbar = 1'b1;
+			IF_ID_loadbar = 1'b1; //no need to loadbar because of synchronous flush :D
 			IF_ID_flush = 1'b1;
 			pc_writebar  = 1'b1;		
 		end 

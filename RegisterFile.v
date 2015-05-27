@@ -9,7 +9,7 @@ module RegFile(input clk, reg_write, input [2:0] addr_A, addr_B, addr_write ,
 		data_B = registers[addr_B];
 	end
 	
-	always@(posedge clk) begin
+	always@(negedge clk) begin // to write and read in a single clk
 		if(reg_write) 
 			registers[addr_write] = write_data;
 		registers[0] = 8'b0;
